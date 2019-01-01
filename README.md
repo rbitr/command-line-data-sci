@@ -36,3 +36,92 @@ Modified Date: 2018-12-31 23:33 UTC
 "Name","Province","Climate ID","Station ID","WMO ID","TC ID","Latitude (Decimal Degrees)","Longitude (Decimal Degrees)","Latitude","Longitude","Elevation (m)","First Year","Last Year","HLY First Year","HLY Last Year","DLY First Year","DLY Last Year","MLY First Year","MLY Last Year"
 "ACTIVE PASS","BRITISH COLUMBIA","1010066","14","","","48.87","-123.28","485200000","-1231700000","4","1984","1996","","","1984","1996","1984","1996"
 ```
+
+The fourth line contains the headers and the fifth shows what the first row of data looks like.
+
+Now that we know the headers are on line 4, let's print them out in a way that is easier to see. There are lots of different ways to do this but I like awk. We can start by piping the file into awk and using the NR selector to only show the fourth row:
+
+```bash
+< stations.csv awk 'NR==4'
+"Name","Province","Climate ID","Station ID","WMO ID","TC ID","Latitude (Decimal Degrees)","Longitude (Decimal Degrees)","Latitude","Longitude","Elevation (m)","First Year","Last Year","HLY First Year","HLY Last Year","DLY First Year","DLY Last Year","MLY First Year","MLY Last Year"
+```
+
+Especially in a terminal that wraps, it is nicer to see these as a list. The quickest way is to replace the commas with newlines:
+
+```bash
+< stations.csv awk 'NR==4' | tr ',' '\n'
+"Name"
+"Province"
+"Climate ID"
+"Station ID"
+"WMO ID"
+"TC ID"
+"Latitude (Decimal Degrees)"
+"Longitude (Decimal Degrees)"
+"Latitude"
+"Longitude"
+"Elevation (m)"
+"First Year"
+"Last Year"
+"HLY First Year"
+"HLY Last Year"
+"DLY First Year"
+"DLY Last Year"
+"MLY First Year"
+"MLY Last Year"
+```
+
+An for readibility, let's add row numbers. I will show two ways just for fun. The lazy way, since we already have the command above, is to pipe back into awk and print the row number:
+
+```bash
+< stations.csv awk 'NR==4' | tr ',' '\n' | awk '{print NR,$0}'
+1 "Name"
+2 "Province"
+3 "Climate ID"
+4 "Station ID"
+5 "WMO ID"
+6 "TC ID"
+7 "Latitude (Decimal Degrees)"
+8 "Longitude (Decimal Degrees)"
+9 "Latitude"
+10 "Longitude"
+11 "Elevation (m)"
+12 "First Year"
+13 "Last Year"
+14 "HLY First Year"
+15 "HLY Last Year"
+16 "DLY First Year"
+17 "DLY Last Year"
+18 "MLY First Year"
+19 "MLY Last Year"
+```
+
+awk has an internal variable called NR that is the row number being operated on. And $0 is just the text in the whole line.
+
+The command above is probable the most natural way to do this, because we are discovering what we want to do as we go. If you already knew this was what you wanted to do, you could use awk in one go:
+
+```bash
+< stations.csv awk -F, 'NR==4 { for (i=1;i<=NF;i++) { print i, $i}}'
+1 "Name"
+2 "Province"
+3 "Climate ID"
+4 "Station ID"
+5 "WMO ID"
+6 "TC ID"
+7 "Latitude (Decimal Degrees)"
+8 "Longitude (Decimal Degrees)"
+9 "Latitude"
+10 "Longitude"
+11 "Elevation (m)"
+12 "First Year"
+13 "Last Year"
+14 "HLY First Year"
+15 "HLY Last Year"
+16 "DLY First Year"
+17 "DLY Last Year"
+18 "MLY First Year"
+19 "MLY Last Year"
+```
+
+This way is actually longer, but illustrated a couple things. awk separates the data into columns that can be accessed by $c where c is the column and $0 is the whole line. The overall syntax of awk is to combine a condition, here NR==4, with what to do if that condition is met. The internal variable NF tells us the number of fields (columns) in the data. Lastly, the switch -F, (or -F ',') tells awk to use a comma as the field separator, because the default is a space.
+
