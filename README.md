@@ -26,3 +26,13 @@ You can use curl to download this list and save it in a file:
 ```bash
 $ curl -s ftp://client_climate@ftp.tor.ec.gc.ca/Pub/Get_More_Data_Plus_de_donnees/Station%20Inventory%20EN.csv 
 ```
+The file is a csv so we would expect a row of headers and then some data. This one turns out to have some other information at the top as well. Using head to look at the first 5 lines, we get:
+
+```bash
+$ < stations.csv head -5
+Modified Date: 2018-12-31 23:33 UTC
+"Station Inventory Disclaimer: Please note that this inventory list is a snapshot of stations on our website as of the modified date, and may be subject to change without notice."
+"Station ID Disclaimer: Station IDs are an internal index numbering system and may be subject to change without notice."
+"Name","Province","Climate ID","Station ID","WMO ID","TC ID","Latitude (Decimal Degrees)","Longitude (Decimal Degrees)","Latitude","Longitude","Elevation (m)","First Year","Last Year","HLY First Year","HLY Last Year","DLY First Year","DLY Last Year","MLY First Year","MLY Last Year"
+"ACTIVE PASS","BRITISH COLUMBIA","1010066","14","","","48.87","-123.28","485200000","-1231700000","4","1984","1996","","","1984","1996","1984","1996"
+```
