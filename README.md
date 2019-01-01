@@ -16,4 +16,13 @@ Linux also has some commands like sort, head, etc.
 
 I will go through an example and explain what the commands and options are doing as the are used:
 
-*Weather data example*
+__Weather data example__
+
+Environment canada has an api that lets you download a .csv file of weather data. The URL for more information is ftp://ftp.tor.ec.gc.ca/Pub/Get_More_Data_Plus_de_donnees/Readme.txt
+
+In order to download the data, you need to specify the code for the weather station. These codes are in a file ftp://client_climate@ftp.tor.ec.gc.ca/Pub/Get_More_Data_Plus_de_donnees/Station%20Inventory%20EN.csv
+
+You can use curl to download this list and save it in a file:
+```bash
+$ curl -s ftp://client_climate@ftp.tor.ec.gc.ca/Pub/Get_More_Data_Plus_de_donnees/Station%20Inventory%20EN.csv 
+```
