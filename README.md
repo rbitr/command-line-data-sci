@@ -301,4 +301,26 @@ This statement uses two new features of awk. One is array indexing. The statemen
 
 The second feature is the END statement for awk. This is what is executed after we have processed all lines in the file. In this case, we are printing out the averages for each month, obtained by dividing the sums by the counts.
 
+The resulting experession is piped to sort because awk does not necessarily step though the array indices in order - they are strings, not numbers.
+
+As an aside, awk's array indexing works with any strings:
+
+```
+$ curl -s http://www.gutenberg.org/files/108/108-0.txt | tr '[:upper:]' '[:lower:]' | tr -cd '[a-z]\n ' | tr -s '\n' | tr ' ' '\n' | awk '{words[$1]+=1} END { for (w in words) print w, words[w]}' | sort -k 2 -r -n | head
+the 6430
+and 2955
+of 2927
+i 2910
+a 2721
+to 2682
+that 2107
+in 1900
+was 1816
+it 1814
+```
+
+The line above downloads the text of a book, uses tr to change all letters to lowercase and remove non-letters, puts one work on each line (by replacing spaces with newlines) and then uses awk to count the occurrence of each work. The statement 'words[$1]+=1` is all it takes to use the word on the current line as an index into the array and add one to the count for that word.
+
+
+
 
