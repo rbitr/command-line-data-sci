@@ -16,7 +16,7 @@ Linux also has some commands like sort, head, etc.
 
 I will go through an example and explain what the commands and options are doing as the are used:
 
-__Weather data example__
+##Weather data example##
 
 Environment canada has an api that lets you download a .csv file of weather data. The URL for more information is ftp://ftp.tor.ec.gc.ca/Pub/Get_More_Data_Plus_de_donnees/Readme.txt
 
@@ -41,12 +41,16 @@ Modified Date: 2018-12-31 23:33 UTC
 
 The fourth line contains the headers and the fifth shows what the first row of data looks like.
 
+__Selecting a row__
+
 Now that we know the headers are on line 4, let's print them out in a way that is easier to see. There are lots of different ways to do this but I like awk. We can start by piping the file into awk and using the NR selector to only show the fourth row:
 
 ```bash
 < stations.csv awk 'NR==4'
 "Name","Province","Climate ID","Station ID","WMO ID","TC ID","Latitude (Decimal Degrees)","Longitude (Decimal Degrees)","Latitude","Longitude","Elevation (m)","First Year","Last Year","HLY First Year","HLY Last Year","DLY First Year","DLY Last Year","MLY First Year","MLY Last Year"
 ```
+
+__Splitting up text__
 
 Especially in a terminal that wraps, it is nicer to see these as a list. The quickest way is to replace the commas with newlines:
 
@@ -127,9 +131,11 @@ The command above is probable the most natural way to do this, because we are di
 
 This way is actually longer, but illustrates a couple things. awk separates the data into columns that can be accessed by $c where c is the column except $0 which gives whole line as in the previous version. The overall syntax of awk is to combine a condition, here NR==4, with what to do if that condition is met. The internal variable NF tells us the number of fields (columns) in the data. Lastly, the switch -F, (or -F ',') tells awk to use a comma as the field separator, because the default is a space.
 
+__Searching within text__
+
 Now that we know the fields, lets look up stations for a particular city. We can do this easily by using grep to match the city name:
 
-```
+```bash
 $ < stations.csv grep MONTREAL
 "MONTREAL LAKE","SASKATCHEWAN","4065260","3390","","","53.62","-105.67","533700000","-1054000000","490.4","1959","1959","","","1959","1959","1959","1959"
 "SOUTH MONTREAL LAKE DNR","SASKATCHEWAN","4067670","3396","","","54.05","-105.8","540300000","-1054800000","490.1","1960","1960","","","1960","1960","1960","1960"
@@ -140,7 +146,9 @@ $ < stations.csv grep MONTREAL
 
 There is a long list of stations for Montreal. Only the first few are shown above. First, the quotation marks in every line are annoying so lets remove them with sed:
 
-```
+__Replacing text with sed__
+
+```bash
 $ < stations.csv sed -e 's/"//g' | grep MONTREAL
 MONTREAL LAKE,SASKATCHEWAN,4065260,3390,,,53.62,-105.67,533700000,-1054000000,490.4,1959,1959,,,1959,1959,1959,1959
 SOUTH MONTREAL LAKE DNR,SASKATCHEWAN,4067670,3396,,,54.05,-105.8,540300000,-1054800000,490.1,1960,1960,,,1960,1960,1960,1960
@@ -150,9 +158,11 @@ MONTREAL FALLS,ONTARIO,6055300,4084,,,47.25,-84.4,471500000,-842400000,408.4,193
 
 sed uses the s command to relace all quotation marks ( /" command ) with nothing ( // ) and do so globally in the file (the g).
 
+__Displaying certain columns with awk__
+
 What we really care about is the station numnber, and also, if we are looking to find a station that is still in service, the years the station was active. 
 
-```
+```bash
 $ < stations.csv sed -e 's/"//g' | grep MONTREAL | awk -F, '{print $1, $4, $12, $13}'
 MONTREAL LAKE 3390 1959 1959
 SOUTH MONTREAL LAKE DNR 3396 1960 1960
@@ -167,7 +177,9 @@ MONTREAL/PIERRE ELLIOTT TRUDEAU INTL A 5415 1941 2013
 
 Here we show the first, fourth, twelfth and thirteenth columns to get the name, the id, and the operational years. There is still a long list of stations (I showed a few more). So finally let's look at only those still operating in 2018:
 
-```
+__Filtering with awk__
+
+```bash
 $ < stations.csv sed -e 's/"//g' | grep MONTREAL | awk -F, '$13>="2018" {print $1, $4, $12, $13}'
 MONTREAL INTL A 51157 2013 2018
 MONTREAL/ST-HUBERT 48374 2009 2018
@@ -177,7 +189,7 @@ MONTREAL MIRABEL INTL A 49608 2012 2018
 
 We used the '$13>="2018"' condition with awk in order to only display stations recording in 2018 or later, and now the list is short.
 
-__Downloading the weather data__
+##Downloading the weather data
 
 Now that we have the code, we can use it do download a spreadsheet of weather data from the Environment Canada API. The documentation explains that we can get the data from the following URL:
 
@@ -185,9 +197,11 @@ http://climate.weather.gc.ca/climate_data/bulk_data_e.html?format=csv&stationID=
 
 The station ID, year, month, and day are specified as shown, along with a timeframe, 1=hourly, 2=daily, 3=monthly. 
 
+__Checking out the data__
+
 Making the substitutions for Trudeau Airport (ID=30165) gives us:
 
-```
+```bash
 $ URL="http://climate.weather.gc.ca/climate_data/bulk_data_e.html?format=csv&stationID=30165&Year=2018&Month=1&Day=1&timeframe=2&submit=Download+Data" 
 $ curl -s $URL | head
 "Station Name","MONTREAL/PIERRE ELLIOTT TRUDEAU INTL"
@@ -203,7 +217,7 @@ $ curl -s $URL | head
 
 This is a bunch of indentifying information about the station. We also set a variable for the URL so we don't have to keep looking at it. Eventually it contains rows of data:
 
-```
+```bash
 $ curl -s $URL | tail
 "2018-12-22","2018","12","22","","8.5","","-6.1","","1.2","","16.8","","0.0","","","","","M","2.0","","1","","28","","56",""
 "2018-12-23","2018","12","23","","-6.1","","-11.0","","-8.5","","26.5","","0.0","","","","","M","0.2","","1","","25","","39",""
@@ -219,7 +233,7 @@ $ curl -s $URL | tail
 
 This is the end of 2018. We will have to play around a bit to figure out where the columns headers are in the file:
 
-``` 
+```bash
 $ curl -s $URL | head -30 | tail -5
 "Date/Time","Year","Month","Day","Data Quality","Max Temp (°C)","Max Temp Flag","Min Temp (°C)","Min Temp Flag","Mean Temp (°C)","Mean Temp Flag","Heat Deg Days (°C)","Heat Deg Days Flag","Cool Deg Days (°C)","Cool Deg Days Flag","Total Rain (mm)","Total Rain Flag","Total Snow (cm)","Total Snow Flag","Total Precip (mm)","Total Precip Flag","Snow on Grnd (cm)","Snow on Grnd Flag","Dir of Max Gust (10s deg)","Dir of Max Gust Flag","Spd of Max Gust (km/h)","Spd of Max Gust Flag"
 "2018-01-01","2018","01","01","","-18.8","","-25.3","","-22.1","","40.1","","0.0","","","M","","M","0.0","","18","","25","","32",""
@@ -230,7 +244,9 @@ $ curl -s $URL | head -30 | tail -5
 
 A lucky guess. The 26th row is contains the headers.
 
-```
+__Breaking a line into fields__
+
+```bash
 $ curl -s $URL | sed 's/"//g' | awk -F, 'NR==26 {for (i=1;i<=NF;i++) {print i, $i}}'
 1 Date/Time
 2 Year
@@ -263,9 +279,11 @@ $ curl -s $URL | sed 's/"//g' | awk -F, 'NR==26 {for (i=1;i<=NF;i++) {print i, $
 
 We followed the same pattern as with the station names file to display the fields.
 
+__Select some rows with sed and print some columns with awk__
+
 Here are a few of the mean temperatures (column 10) by date:
 
-```
+```bash
 $ curl -s $URL | sed 's/"//g' | sed -n '27,36p' | awk -F, '{print $1, $10}'
 2018-01-01 -22.1
 2018-01-02 -19.5
@@ -279,9 +297,11 @@ $ curl -s $URL | sed 's/"//g' | sed -n '27,36p' | awk -F, '{print $1, $10}'
 2018-01-10 -8.0
 ```
 
+__Data consolidation__
+
 Having read in some data, we want to do some calculations on it. For example, get the average monthly temperature. Consider:
 
-```
+```bash
 $ curl -s $URL | sed -e 's/"//g' | awk -F, 'NR>26 {sum[$3]+=$10; num[$3]+=1} END {for (k in sum) print k,sum[k]/num[k]}' | sort -n
 01 -9.71613
 02 -4.56429
@@ -303,9 +323,11 @@ The second feature is the END statement for awk. This is what is executed after 
 
 The resulting experession is piped to sort because awk does not necessarily step though the array indices in order - they are strings, not numbers.
 
+__An aside about arrays__
+
 As an aside, awk's array indexing works with any strings:
 
-```
+```bash
 $ curl -s http://www.gutenberg.org/files/108/108-0.txt | tr '[:upper:]' '[:lower:]' | tr -cd '[a-z]\n ' | tr -s '\n' | tr ' ' '\n' | awk '{words[$1]+=1} END { for (w in words) print w, words[w]}' | sort -k 2 -r -n | head
 the 6430
 and 2955
@@ -321,17 +343,19 @@ it 1814
 
 The line above downloads the text of a book, uses tr to change all letters to lowercase and remove non-letters, puts one work on each line (by replacing spaces with newlines) and then uses awk to count the occurrence of each work. The statement 'words[$1]+=1` is all it takes to use the word on the current line as an index into the array and add one to the count for that word.
 
+__More complex calculations with multiple passes__
+
 Lastly, we can do more complicated things if we want. It may be better off to use python at this point, but for big files or remote access the following idea may still make sense. Here we calculate the standard deviation for each month (I adapted this from another tutorial available at [http://john-hawkins.blogspot.com/2013/09/using-awk-for-data-science.html]
 
 First save the data in a file and get some of the preprocessing out of the way:
 
-```
+```bash
 $ curl -s $URL | sed -e 's/"' | awk 'NR>26' > TMPFILE
 ```
 
 Now, compute the standard deviation in two passes:
 
-```
+```bash
 $ awk -F, 'pass==1 {sum[$3]+=$10; num[$3]+=1} pass==2 { mean=sum[$3]/num[$3]; ssd[$3]+=($10-mean)*($10-mean)} END {for (k in sum) print k,sum[k]/num[k], sqrt(ssd[k]/num[k])}' pass=1 TMPFILE pass=2 TMPFILE | sort
 01 -9.71613 7.37997
 02 -4.56429 5.49586
@@ -350,6 +374,8 @@ $ awk -F, 'pass==1 {sum[$3]+=$10; num[$3]+=1} pass==2 { mean=sum[$3]/num[$3]; ss
 You can see we pass the data to awk twice along with a `pass` variable. On the first pass, we find the mean for each month as before. On the second pass, we add the squared residual value for each day to an array for its month ( `ssd[$3]+=($10-mean)*($10-mean)` ) and then take the square root of the average to get the standard deviation.
 
 This gives an idea of how a more complex analysis could take place. For example the link referenced above shows an example of using awk to calculate the correlation between two variables. 
+
+__Conclusions__
 
 While awk does most of the heavy lifting, combining it with sed, grep, and a few other utilities creates a simple and powerful workflow that can handle many simple data manipulation and analysis tasks.
 
