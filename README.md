@@ -123,5 +123,58 @@ The command above is probable the most natural way to do this, because we are di
 19 "MLY Last Year"
 ```
 
-This way is actually longer, but illustrated a couple things. awk separates the data into columns that can be accessed by $c where c is the column and $0 is the whole line. The overall syntax of awk is to combine a condition, here NR==4, with what to do if that condition is met. The internal variable NF tells us the number of fields (columns) in the data. Lastly, the switch -F, (or -F ',') tells awk to use a comma as the field separator, because the default is a space.
+This way is actually longer, but illustrates a couple things. awk separates the data into columns that can be accessed by $c where c is the column except $0 which gives whole line as in the previous version. The overall syntax of awk is to combine a condition, here NR==4, with what to do if that condition is met. The internal variable NF tells us the number of fields (columns) in the data. Lastly, the switch -F, (or -F ',') tells awk to use a comma as the field separator, because the default is a space.
+
+Now that we know the fields, lets look up stations for a particular city. We can do this easily by using grep to match the city name:
+
+```
+$ < stations.csv grep MONTREAL
+"MONTREAL LAKE","SASKATCHEWAN","4065260","3390","","","53.62","-105.67","533700000","-1054000000","490.4","1959","1959","","","1959","1959","1959","1959"
+"SOUTH MONTREAL LAKE DNR","SASKATCHEWAN","4067670","3396","","","54.05","-105.8","540300000","-1054800000","490.1","1960","1960","","","1960","1960","1960","1960"
+"MONTREAL FALLS","ONTARIO","6055300","4084","","","47.25","-84.4","471500000","-842400000","408.4","1932","1955","","","1932","1955","1932","1955"
+"MONTREAL FALLS","ONTARIO","6055302","4085","","","47.27","-84.43","471600000","-842600000","306.3","1976","1999","","","1976","1999","1976","1999"
+...
+```
+
+There is a long list of stations for Montreal. Only the first few are shown above. First, the quotation marks in every line are annoying so lets remove them with sed:
+
+```
+$ < stations.csv sed -e 's/"//g' | grep MONTREAL
+MONTREAL LAKE,SASKATCHEWAN,4065260,3390,,,53.62,-105.67,533700000,-1054000000,490.4,1959,1959,,,1959,1959,1959,1959
+SOUTH MONTREAL LAKE DNR,SASKATCHEWAN,4067670,3396,,,54.05,-105.8,540300000,-1054800000,490.1,1960,1960,,,1960,1960,1960,1960
+MONTREAL FALLS,ONTARIO,6055300,4084,,,47.25,-84.4,471500000,-842400000,408.4,1932,1955,,,1932,1955,1932,1955
+...
+```
+
+sed uses the s command to relace all quotation marks ( /" command ) with nothing ( // ) and do so globally in the file (the g).
+
+What we really care about is the station numnber, and also, if we are looking to find a station that is still in service, the years the station was active. 
+
+```
+$ < stations.csv sed -e 's/"//g' | grep MONTREAL | awk -F, '{print $1, $4, $12, $13}'
+MONTREAL LAKE 3390 1959 1959
+SOUTH MONTREAL LAKE DNR 3396 1960 1960
+MONTREAL FALLS 4084 1932 1955
+MONTREAL FALLS 4085 1976 1999
+MONTREAL RIVER (AUT) 41595 2000 2007
+MONTREAL RIVER 4166 1910 1967
+MONTREAL ADAC A 8343 1974 1976
+MONTREAL ICE CONTROL 5414 1967 1970
+MONTREAL/PIERRE ELLIOTT TRUDEAU INTL A 5415 1941 2013
+```
+
+Here we show the first, fourth, twelfth and thirteenth columns to get the name, the id, and the operational years. There is still a long list of stations (I showed a few more). So finally let's look at only those still operating in 2018:
+
+```
+$ < stations.csv sed -e 's/"//g' | grep MONTREAL | awk -F, '$13>="2018" {print $1, $4, $12, $13}'
+MONTREAL INTL A 51157 2013 2018
+MONTREAL/ST-HUBERT 48374 2009 2018
+MONTREAL/PIERRE ELLIOTT TRUDEAU INTL 30165 2002 2018
+MONTREAL MIRABEL INTL A 49608 2012 2018
+```
+
+We used the '$13>="2018"' condition with awk in order to only display stations recording in 2018 or later, and now the list is short.
+
+
+
 
