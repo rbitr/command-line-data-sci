@@ -321,6 +321,36 @@ it 1814
 
 The line above downloads the text of a book, uses tr to change all letters to lowercase and remove non-letters, puts one work on each line (by replacing spaces with newlines) and then uses awk to count the occurrence of each work. The statement 'words[$1]+=1` is all it takes to use the word on the current line as an index into the array and add one to the count for that word.
 
+Lastly, we can do more complicated things if we want. It may be better off to use python at this point, but for big files or remote access the following idea may still make sense. Here we calculate the standard deviation for each month (I adapted this from another tutorial available at [http://john-hawkins.blogspot.com/2013/09/using-awk-for-data-science.html]
 
+First save the data in a file and get some of the preprocessing out of the way:
+
+```
+$ curl -s $URL | sed -e 's/"' | awk 'NR>26' > TMPFILE
+```
+
+Now, compute the standard deviation in two passes:
+
+```
+$ awk -F, 'pass==1 {sum[$3]+=$10; num[$3]+=1} pass==2 { mean=sum[$3]/num[$3]; ssd[$3]+=($10-mean)*($10-mean)} END {for (k in sum) print k,sum[k]/num[k], sqrt(ssd[k]/num[k])}' pass=1 TMPFILE pass=2 TMPFILE | sort
+01 -9.71613 7.37997
+02 -4.56429 5.49586
+03 -0.919355 4.14825
+04 3.92 4.79794
+05 14.8161 5.24731
+06 18.3167 4.86991
+07 24.2129 2.57716
+08 22.2645 4.70857
+09 17.63 4.76873
+10 6.05161 4.88473
+11 -0.716667 5.41738
+12 -4.81613 4.82006
+```
+
+You can see we pass the data to awk twice along with a `pass` variable. On the first pass, we find the mean for each month as before. On the second pass, we add the squared residual value for each day to an array for its month ( `ssd[$3]+=($10-mean)*($10-mean)` ) and then take the square root of the average to get the standard deviation.
+
+This gives an idea of how a more complex analysis could take place. For example the link referenced above shows an example of using awk to calculate the correlation between two variables. 
+
+While awk does most of the heavy lifting, combining it with sed, grep, and a few other utilities creates a simple and powerful workflow that can handle many simple data manipulation and analysis tasks.
 
 
