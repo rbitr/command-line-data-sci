@@ -12,11 +12,11 @@ sed is a stream editor that lets you find and replace text in a file; tr is a si
 
 awk is a programming language that operates on individual lines in a data stream
 
-Linux also has some commands like sort, head, etc.
+Linux also has some commands like sort, head, etc. that can do simple operations on data.
 
 I will go through an example and explain what the commands and options are doing as the are used:
 
-##Weather data example##
+## Weather data example 
 
 Environment canada has an api that lets you download a .csv file of weather data. The URL for more information is ftp://ftp.tor.ec.gc.ca/Pub/Get_More_Data_Plus_de_donnees/Readme.txt
 
@@ -189,7 +189,7 @@ MONTREAL MIRABEL INTL A 49608 2012 2018
 
 We used the '$13>="2018"' condition with awk in order to only display stations recording in 2018 or later, and now the list is short.
 
-##Downloading the weather data
+## Downloading the weather data
 
 Now that we have the code, we can use it do download a spreadsheet of weather data from the Environment Canada API. The documentation explains that we can get the data from the following URL:
 
