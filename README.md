@@ -341,11 +341,11 @@ was 1816
 it 1814
 ```
 
-The line above downloads the text of a book, uses tr to change all letters to lowercase and remove non-letters, puts one work on each line (by replacing spaces with newlines) and then uses awk to count the occurrence of each work. The statement 'words[$1]+=1` is all it takes to use the word on the current line as an index into the array and add one to the count for that word.
+The line above downloads the text of a book, uses tr to change all letters to lowercase and remove non-letters, puts one work on each line (by replacing spaces with newlines) and then uses awk to count the occurrence of each work. The statement `words[$1]+=1` is all it takes to use the word on the current line as an index into the array and add one to the count for that word.
 
 __More complex calculations with multiple passes__
 
-Lastly, we can do more complicated things if we want. It may be better off to use python at this point, but for big files or remote access the following idea may still make sense. Here we calculate the standard deviation for each month (I adapted this from another tutorial available at [http://john-hawkins.blogspot.com/2013/09/using-awk-for-data-science.html]
+Lastly, we can do more complicated things if we want. It may be better off to use python at this point, but for big files or remote access the following idea may still make sense. Here we calculate the standard deviation for each month (I adapted this from another tutorial available at http://john-hawkins.blogspot.com/2013/09/using-awk-for-data-science.html
 
 First save the data in a file and get some of the preprocessing out of the way:
 
