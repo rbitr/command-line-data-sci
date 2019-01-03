@@ -20,6 +20,8 @@ __Weather data example__
 
 Environment canada has an api that lets you download a .csv file of weather data. The URL for more information is ftp://ftp.tor.ec.gc.ca/Pub/Get_More_Data_Plus_de_donnees/Readme.txt
 
+__Getting a station code__
+
 In order to download the data, you need to specify the code for the weather station. These codes are in a file ftp://client_climate@ftp.tor.ec.gc.ca/Pub/Get_More_Data_Plus_de_donnees/Station%20Inventory%20EN.csv
 
 You can use curl to download this list and save it in a file:
@@ -175,6 +177,128 @@ MONTREAL MIRABEL INTL A 49608 2012 2018
 
 We used the '$13>="2018"' condition with awk in order to only display stations recording in 2018 or later, and now the list is short.
 
+__Downloading the weather data__
 
+Now that we have the code, we can use it do download a spreadsheet of weather data from the Environment Canada API. The documentation explains that we can get the data from the following URL:
+
+http://climate.weather.gc.ca/climate_data/bulk_data_e.html?format=csv&stationID=${ID}&Year=${year}&Month=${month}&Day=${day}4&timeframe=${tf}&submit=Download+Data
+
+The station ID, year, month, and day are specified as shown, along with a timeframe, 1=hourly, 2=daily, 3=monthly. 
+
+Making the substitutions for Trudeau Airport (ID=30165) gives us:
+
+```
+$ URL="http://climate.weather.gc.ca/climate_data/bulk_data_e.html?format=csv&stationID=30165&Year=2018&Month=1&Day=1&timeframe=2&submit=Download+Data" 
+$ curl -s $URL | head
+"Station Name","MONTREAL/PIERRE ELLIOTT TRUDEAU INTL"
+"Province","QUEBEC"
+"Current Station Operator","Environment and Climate Change Canada - Meteorological Service of Canada"
+"Latitude","45.47"
+"Longitude","-73.74"
+"Elevation","32.10"
+"Climate Identifier","702S006"
+"WMO Identifier","71183"
+"TC Identifier","WTQ"
+```
+
+This is a bunch of indentifying information about the station. We also set a variable for the URL so we don't have to keep looking at it. Eventually it contains rows of data:
+
+```
+$ curl -s $URL | tail
+"2018-12-22","2018","12","22","","8.5","","-6.1","","1.2","","16.8","","0.0","","","","","M","2.0","","1","","28","","56",""
+"2018-12-23","2018","12","23","","-6.1","","-11.0","","-8.5","","26.5","","0.0","","","","","M","0.2","","1","","25","","39",""
+"2018-12-24","2018","12","24","","-6.4","","-11.3","","-8.8","","26.8","","0.0","","","","","M","0.0","","1","","","","",""
+"2018-12-25","2018","12","25","","-8.2","","-13.5","","-10.8","","28.8","","0.0","","","","","M","0.0","","1","","","","",""
+"2018-12-26","2018","12","26","","-4.3","","-12.1","","-8.2","","26.2","","0.0","","","","","M","0.2","","1","","","","",""
+"2018-12-27","2018","12","27","","-8.4","","-14.4","","-11.4","","29.4","","0.0","","","","","M","0.6","","2","","5","","31",""
+"2018-12-28","2018","12","28","","3.0","","-8.7","","-2.9","","20.9","","0.0","","","","","M","14.6","","2","","16","","32",""
+"2018-12-29","2018","12","29","","6.4","","-12.2","","-2.9","","20.9","","0.0","","","","","M","0.6","","2","","25","","51",""
+"2018-12-30","2018","12","30","","-6.9","","-12.7","","-9.8","","27.8","","0.0","","","","","M","0.5","","2","","","","",""
+"2018-12-31","2018","12","31","","2.2","","-8.4","","-3.1","","21.1","","0.0","","","","","M","2.5","","2","","15","","38",""
+```
+
+This is the end of 2018. We will have to play around a bit to figure out where the columns headers are in the file:
+
+``` 
+$ curl -s $URL | head -30 | tail -5
+"Date/Time","Year","Month","Day","Data Quality","Max Temp (°C)","Max Temp Flag","Min Temp (°C)","Min Temp Flag","Mean Temp (°C)","Mean Temp Flag","Heat Deg Days (°C)","Heat Deg Days Flag","Cool Deg Days (°C)","Cool Deg Days Flag","Total Rain (mm)","Total Rain Flag","Total Snow (cm)","Total Snow Flag","Total Precip (mm)","Total Precip Flag","Snow on Grnd (cm)","Snow on Grnd Flag","Dir of Max Gust (10s deg)","Dir of Max Gust Flag","Spd of Max Gust (km/h)","Spd of Max Gust Flag"
+"2018-01-01","2018","01","01","","-18.8","","-25.3","","-22.1","","40.1","","0.0","","","M","","M","0.0","","18","","25","","32",""
+"2018-01-02","2018","01","02","","-14.0","","-24.9","","-19.5","","37.5","","0.0","","","M","","M","2.5","","18","","13","","32",""
+"2018-01-03","2018","01","03","","-10.2","","-16.2","","-13.2","","31.2","","0.0","","","M","","M","0.2","","22","","","","<31",""
+"2018-01-04","2018","01","04","","-6.7","","-14.1","","-10.4","","28.4","","0.0","","","M","","M","0.9","","23","","27","","46",""
+```
+
+A lucky guess. The 26th row is contains the headers.
+
+```
+$ curl -s $URL | sed 's/"//g' | awk -F, 'NR==26 {for (i=1;i<=NF;i++) {print i, $i}}'
+1 Date/Time
+2 Year
+3 Month
+4 Day
+5 Data Quality
+6 Max Temp (°C)
+7 Max Temp Flag
+8 Min Temp (°C)
+9 Min Temp Flag
+10 Mean Temp (°C)
+11 Mean Temp Flag
+12 Heat Deg Days (°C)
+13 Heat Deg Days Flag
+14 Cool Deg Days (°C)
+15 Cool Deg Days Flag
+16 Total Rain (mm)
+17 Total Rain Flag
+18 Total Snow (cm)
+19 Total Snow Flag
+20 Total Precip (mm)
+21 Total Precip Flag
+22 Snow on Grnd (cm)
+23 Snow on Grnd Flag
+24 Dir of Max Gust (10s deg)
+25 Dir of Max Gust Flag
+26 Spd of Max Gust (km/h)
+27 Spd of Max Gust Flag
+```
+
+We followed the same pattern as with the station names file to display the fields.
+
+Here are a few of the mean temperatures (column 10) by date:
+
+```
+$ curl -s $URL | sed 's/"//g' | sed -n '27,36p' | awk -F, '{print $1, $10}'
+2018-01-01 -22.1
+2018-01-02 -19.5
+2018-01-03 -13.2
+2018-01-04 -10.4
+2018-01-05 -18.3
+2018-01-06 -21.9
+2018-01-07 -17.7
+2018-01-08 -7.1
+2018-01-09 -5.3
+2018-01-10 -8.0
+```
+
+Having read in some data, we want to do some calculations on it. For example, get the average monthly temperature. Consider:
+
+```
+$ curl -s $URL | sed -e 's/"//g' | awk -F, 'NR>26 {sum[$3]+=$10; num[$3]+=1} END {for (k in sum) print k,sum[k]/num[k]}' | sort -n
+01 -9.71613
+02 -4.56429
+03 -0.919355
+04 3.92
+05 14.8161
+06 18.3167
+07 24.2129
+08 22.2645
+09 17.63
+10 6.05161
+11 -0.716667
+12 -4.81613
+```
+
+This statement uses two new features of awk. One is array indexing. The statement `sum[$3]+=$10` uses the month (field 3) as an index to an array called `sum`. Indices previously not encountered are initialized to 0. The mean temperature that day (field 10) is then added to the sum. At the same time, we use `num[$3]+=1` to count the number of days summed for each month.
+
+The second feature is the END statement for awk. This is what is executed after we have processed all lines in the file. In this case, we are printing out the averages for each month, obtained by dividing the sums by the counts.
 
 
