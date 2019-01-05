@@ -46,7 +46,7 @@ __Selecting a row__
 Now that we know the headers are on line 4, let's print them out in a way that is easier to see. There are lots of different ways to do this but I like awk. We can start by piping the file into awk and using the NR selector to only show the fourth row:
 
 ```bash
-< stations.csv awk 'NR==4'
+$ < stations.csv awk 'NR==4'
 "Name","Province","Climate ID","Station ID","WMO ID","TC ID","Latitude (Decimal Degrees)","Longitude (Decimal Degrees)","Latitude","Longitude","Elevation (m)","First Year","Last Year","HLY First Year","HLY Last Year","DLY First Year","DLY Last Year","MLY First Year","MLY Last Year"
 ```
 
@@ -55,7 +55,7 @@ __Splitting up text__
 Especially in a terminal that wraps, it is nicer to see these as a list. The quickest way is to replace the commas with newlines:
 
 ```bash
-< stations.csv awk 'NR==4' | tr ',' '\n'
+$ < stations.csv awk 'NR==4' | tr ',' '\n'
 "Name"
 "Province"
 "Climate ID"
@@ -80,7 +80,7 @@ Especially in a terminal that wraps, it is nicer to see these as a list. The qui
 An for readibility, let's add row numbers. I will show two ways just for fun. The lazy way, since we already have the command above, is to pipe back into awk and print the row number:
 
 ```bash
-< stations.csv awk 'NR==4' | tr ',' '\n' | awk '{print NR,$0}'
+$ < stations.csv awk 'NR==4' | tr ',' '\n' | awk '{print NR,$0}'
 1 "Name"
 2 "Province"
 3 "Climate ID"
@@ -107,7 +107,7 @@ awk has an internal variable called NR that is the row number being operated on.
 The command above is probable the most natural way to do this, because we are discovering what we want to do as we go. If you already knew this was what you wanted to do, you could use awk in one go:
 
 ```bash
-< stations.csv awk -F, 'NR==4 { for (i=1;i<=NF;i++) { print i, $i}}'
+$ < stations.csv awk -F, 'NR==4 { for (i=1;i<=NF;i++) { print i, $i}}'
 1 "Name"
 2 "Province"
 3 "Climate ID"
@@ -129,7 +129,7 @@ The command above is probable the most natural way to do this, because we are di
 19 "MLY Last Year"
 ```
 
-This way is actually longer, but illustrates a couple things. awk separates the data into columns that can be accessed by $c where c is the column except $0 which gives whole line as in the previous version. The overall syntax of awk is to combine a condition, here NR==4, with what to do if that condition is met. The internal variable NF tells us the number of fields (columns) in the data. Lastly, the switch -F, (or -F ',') tells awk to use a comma as the field separator, because the default is a space.
+This way is actually longer, but illustrates a couple things. awk separates the data into columns that can be accessed by `$c` where `c` is the column except $0 which gives whole line as in the previous version. The overall syntax of awk is to combine a condition, here `NR==4`, with what to do if that condition is met. The internal variable `NF` tells us the number of fields (columns) in the data. Lastly, the switch `-F,` (or `-F ','`) tells awk to use a comma as the field separator, because the default is a space.
 
 __Searching within text__
 
@@ -187,7 +187,7 @@ MONTREAL/PIERRE ELLIOTT TRUDEAU INTL 30165 2002 2018
 MONTREAL MIRABEL INTL A 49608 2012 2018
 ```
 
-We used the '$13>="2018"' condition with awk in order to only display stations recording in 2018 or later, and now the list is short.
+We used the `'$13>="2018"'` condition with awk in order to only display stations recording in 2018 or later, and now the list is short.
 
 ## Downloading the weather data
 
